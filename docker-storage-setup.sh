@@ -93,7 +93,7 @@ create_metadata_lv() {
   # more difficult do to the range of possible inputs.
   VG_SIZE=$( vgs --noheadings --nosuffix --units s -o vg_size $VG )
   META_SIZE=$(( $VG_SIZE / 1000 + 1 ))
-  if [ ! -n "$META_LV_SIZE" ]; then
+  if [ -n "$META_SIZE" ]; then
     lvcreate -L ${META_SIZE}s -n $META_LV_NAME $VG
   fi
 }
@@ -291,6 +291,12 @@ fi
 # Read mounts
 ROOT_DEV=$( awk '$2 ~ /^\/$/ && $1 !~ /rootfs/ { print $1 }' /proc/mounts )
 ROOT_VG=$( lvs --noheadings -o vg_name $ROOT_DEV | sed -e 's/^ *//' -e 's/ *$//')
+
+if [ -z "$ROOT_VG" ]; then
+  echo "ERROR: a root volume group is required on your system."
+  exit 1
+fi
+
 ROOT_PVS=$( pvs --noheadings -o pv_name,vg_name | awk "\$2 ~ /^$ROOT_VG\$/ { print \$1 }" )
 
 VG_EXISTS=
